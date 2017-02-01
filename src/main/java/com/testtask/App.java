@@ -88,9 +88,7 @@ public class App
     public void execute() {
         log.info("start execution.");
         ExecutorService executor = Executors.newCachedThreadPool();
-        for (Producer producer : _producers) {
-            executor.execute(producer);
-        }
+        _producers.forEach(executor::execute);
         executor.execute(_messagesInspector);
         executor.execute(_consumer);
         executor.shutdown();

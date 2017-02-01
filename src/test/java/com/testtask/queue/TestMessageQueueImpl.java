@@ -28,10 +28,11 @@ public class TestMessageQueueImpl
     @Test
     public void testDequeue() throws InterruptedException {
         testQueue();
-        Iterator<String> itr = messageQueue.iterator();
+        MessageQueueIterator<String> itr = (MessageQueueIterator<String>) messageQueue.iterator();
         int i = 0;
         while (itr.hasNext()) {
             itr.next();
+            itr.complete();
             assertTrue((messageQueue.dequeue()).equals(messages[i++]));
         }
         assertEquals(0, messageQueue.size());

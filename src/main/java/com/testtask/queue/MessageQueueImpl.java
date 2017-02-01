@@ -11,28 +11,23 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Message queue implementation.
- * Inspector thread is required for correct work.
+ * Iterating through queue is required for correct work.
  *
  */
 public class MessageQueueImpl<E> implements IMessageQueue<E>
 {
     private final static int MAX_CAPACITY = 10000;
-    private final static long NANOS_TIMEOUT = 1000000;
+    private final static long AWAIT_TIME = 100000L; //just for testing purposes
+
     private static final Logger log = Logger.getLogger(MessageQueueImpl.class);
 
-    private final BlockingQueue<E> _messageQueue;
-    private final AtomicInteger _counter;
-    private final ReentrantLock _lock;
-    private final Condition _notAllChecked;
-    private final Condition _notAllGet;
-
-    public MessageQueueImpl() {
-        _messageQueue = new LinkedBlockingQueue<>(MAX_CAPACITY);
-        _counter = new AtomicInteger(0);
-        _lock = new ReentrantLock();
-        _notAllChecked = _lock.newCondition();
-        _notAllGet = _lock.newCondition();
-    }
+    private final BlockingQueue<E> _messageQueue = new LinkedBlockingQueue<>(MAX_CAPACITY);
+    //counter of checked messages that are ready for dequeue
+    private final AtomicInteger _counter = new AtomicInteger(0);
+    private final ReentrantLock _lock = new ReentrantLock();
+    //conditions for check and take
+    private final Condition _notAllChecked = _lock.newCondition();
+    private final Condition _notAllTaken = _lock.newCondition();
 
     public void queue(E message) throws InterruptedException {
         _lock.lockInterruptibly();
@@ -49,12 +44,14 @@ public class MessageQueueImpl<E> implements IMessageQueue<E>
     public E dequeue() throws InterruptedException {
         _lock.lockInterruptibly();
         try {
+            E message;
             while (_counter.get() == 0) {
-                _notAllGet.await();
+                _notAllTaken.await();
             }
             log.debug("dequeue message. counter=" + _counter.get());
+            message = _messageQueue.take();
             _counter.decrementAndGet();
-            return _messageQueue.take();
+            return message;
         } finally {
             _lock.unlock();
         }
@@ -64,14 +61,14 @@ public class MessageQueueImpl<E> implements IMessageQueue<E>
         return _messageQueue.size();
     }
 
-    public Iterator<E> iterator() {
-        return new MessageQueueIterator(_messageQueue.iterator());
+    public MessageQueueIterator<E> iterator() {
+        return new MessageQueueIteratorImpl<>(_messageQueue.iterator());
     }
 
-    private class MessageQueueIterator implements Iterator<E> {
+    private class MessageQueueIteratorImpl<E> implements MessageQueueIterator<E> {
         private Iterator<E> _iterator;
 
-        MessageQueueIterator(Iterator<E> iterator) {
+        MessageQueueIteratorImpl(Iterator<E> iterator) {
             _iterator = iterator;
         }
 
@@ -81,36 +78,33 @@ public class MessageQueueImpl<E> implements IMessageQueue<E>
                 _lock.lockInterruptibly();
                 try {
                     while (!_iterator.hasNext() && _messageQueue.size() > 0) {
-                        _notAllChecked.awaitNanos(NANOS_TIMEOUT);
+                        _notAllChecked.awaitNanos(AWAIT_TIME);
                     }
                     hasNext = _iterator.hasNext();
                 } finally {
                     _lock.unlock();
                 }
             } catch (InterruptedException e) {
-                log.error("MessageQueueIterator: " + e);
+                log.error("MessageQueueIteratorImpl: " + e);
                 Thread.currentThread().interrupt();
             }
             return hasNext;
         }
 
         public E next() {
-            E next = null;
+            log.debug("MessageQueueIteratorImpl: next(): counter=" + _counter.get());
+            return _iterator.next();
+        }
+
+        public void complete() {
+            _lock.lock();
             try {
-                _lock.lockInterruptibly();
-                try {
-                    log.debug("MessageQueueIterator: next(): counter=" + _counter.get());
-                    next = _iterator.next();
-                    _counter.incrementAndGet();
-                    _notAllGet.signal();
-                } finally {
-                    _lock.unlock();
-                }
-            } catch (InterruptedException e) {
-                log.error("MessageQueueIterator: " + e);
-                Thread.currentThread().interrupt();
+                log.debug("MessageQueueIteratorImpl: complete(): counter=" + _counter.get());
+                _counter.incrementAndGet();
+                _notAllTaken.signal();
+            } finally {
+                _lock.unlock();
             }
-            return next;
         }
 
         public void remove() {

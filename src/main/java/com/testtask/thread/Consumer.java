@@ -28,7 +28,6 @@ public class Consumer implements Runnable
 
     public void run() {
         File file = new File(_resultFile);
-
         try {
             if (file.exists()) {
                 if (file.delete())
@@ -40,7 +39,6 @@ public class Consumer implements Runnable
                         try {
                             log.debug("try to get message from queue. queue size=" + _messageQueue.size());
                             out.println(convertMessageToString((KeyValueMessage) _messageQueue.dequeue()));
-
                             if (_messageQueue.size() == 0) {
                                 break;
                             }
