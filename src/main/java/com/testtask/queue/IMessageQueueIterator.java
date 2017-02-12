@@ -3,10 +3,10 @@ package com.testtask.queue;
 import java.util.Iterator;
 
 /**
- * MessageQueueIterator interface.
+ * IMessageQueueIterator interface.
  * hasNext()->next()->update data->complete()
  *
  */
-public interface MessageQueueIterator<E> extends Iterator<E> {
+public interface IMessageQueueIterator<E> extends Iterator<E> {
     void complete();
 }

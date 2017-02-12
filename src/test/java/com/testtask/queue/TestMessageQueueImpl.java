@@ -2,8 +2,6 @@ package com.testtask.queue;
 
 import org.junit.Test;
 
-import java.util.Iterator;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -28,7 +26,7 @@ public class TestMessageQueueImpl
     @Test
     public void testDequeue() throws InterruptedException {
         testQueue();
-        MessageQueueIterator<String> itr = (MessageQueueIterator<String>) messageQueue.iterator();
+        IMessageQueueIterator<String> itr = (IMessageQueueIterator<String>) messageQueue.iterator();
         int i = 0;
         while (itr.hasNext()) {
             itr.next();

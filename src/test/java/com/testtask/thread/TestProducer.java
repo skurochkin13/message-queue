@@ -2,8 +2,8 @@ package com.testtask.thread;
 
 import com.testtask.inputfilegenerator.FileGeneratorImpl;
 import com.testtask.message.KeyValueMessage;
+import com.testtask.queue.IMessageQueueIterator;
 import com.testtask.queue.MessageQueueImpl;
-import com.testtask.queue.MessageQueueIterator;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -43,7 +43,7 @@ public class TestProducer
         MessageQueueImpl<KeyValueMessage> messageQueue = new MessageQueueImpl<>();
         Producer producer = new Producer(messageQueue, fileName);
         producer.run();
-        MessageQueueIterator<KeyValueMessage> itr = messageQueue.iterator();
+        IMessageQueueIterator<KeyValueMessage> itr = messageQueue.iterator();
         counter = 0;
         while (itr.hasNext()) {
             itr.next();

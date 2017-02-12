@@ -61,14 +61,14 @@ public class MessageQueueImpl<E> implements IMessageQueue<E>
         return _messageQueue.size();
     }
 
-    public MessageQueueIterator<E> iterator() {
-        return new MessageQueueIteratorImpl<>(_messageQueue.iterator());
+    public IMessageQueueIterator<E> iterator() {
+        return new IMessageQueueIteratorImpl<>(_messageQueue.iterator());
     }
 
-    private class MessageQueueIteratorImpl<E> implements MessageQueueIterator<E> {
+    private class IMessageQueueIteratorImpl<E> implements IMessageQueueIterator<E> {
         private Iterator<E> _iterator;
 
-        MessageQueueIteratorImpl(Iterator<E> iterator) {
+        IMessageQueueIteratorImpl(Iterator<E> iterator) {
             _iterator = iterator;
         }
 
@@ -85,21 +85,20 @@ public class MessageQueueImpl<E> implements IMessageQueue<E>
                     _lock.unlock();
                 }
             } catch (InterruptedException e) {
-                log.error("MessageQueueIteratorImpl: " + e);
+                log.error("IMessageQueueIteratorImpl: " + e);
                 Thread.currentThread().interrupt();
             }
             return hasNext;
         }
 
         public E next() {
-            log.debug("MessageQueueIteratorImpl: next(): counter=" + _counter.get());
             return _iterator.next();
         }
 
         public void complete() {
             _lock.lock();
             try {
-                log.debug("MessageQueueIteratorImpl: complete(): counter=" + _counter.get());
+                log.debug("IMessageQueueIteratorImpl: complete(): counter=" + _counter.get());
                 _counter.incrementAndGet();
                 _notAllTaken.signal();
             } finally {

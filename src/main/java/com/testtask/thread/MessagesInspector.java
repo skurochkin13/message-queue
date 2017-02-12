@@ -2,7 +2,7 @@ package com.testtask.thread;
 
 import com.testtask.message.KeyValueMessage;
 import com.testtask.queue.IMessageQueue;
-import com.testtask.queue.MessageQueueIterator;
+import com.testtask.queue.IMessageQueueIterator;
 import org.apache.log4j.Logger;
 
 /**
@@ -36,8 +36,8 @@ public class MessagesInspector implements Runnable
             Thread.currentThread().interrupt();
         }
 
-        MessageQueueIterator<KeyValueMessage> iterator =
-                (MessageQueueIterator<KeyValueMessage>) _messageQueue.iterator();
+        IMessageQueueIterator<KeyValueMessage> iterator =
+                (IMessageQueueIterator<KeyValueMessage>) _messageQueue.iterator();
         while (true) {
             log.debug("try to get next message to check. queue size=" + _messageQueue.size());
             if (iterator.hasNext()) {
